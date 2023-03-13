@@ -34,9 +34,7 @@ DB_DB = os.getenv('DB_DB')
 
 # connect to DB
 db_connection_str = 'mysql+pymysql://'+DB_USER+':'+DB_PASS+'@'+DB_SERVER+'/'+DB_DB
-db_connection = create_engine(db_connection_str, pool_recycle=3600)
-connection = db_connection.connect()
-
+engine = create_engine(db_connection_str, pool_recycle=3600)
 
 
 
@@ -57,8 +55,10 @@ def get_player_absences(member_id, member_name):
             AND (cap.date_end > CURDATE())
             AND cap.member_id = :mid
             ORDER BY date_start asc""")
-    result = connection.execute(sql, {'mid' : member_id})
-    rows = result.fetchall()
+            
+    with engine.connect() as conn:
+        result = conn.execute(sql, {'mid' : member_id})
+        rows = result.fetchall()
     
     #### Create the initial embed object ####
     embed=discord.Embed(title="LMC Attendance", url="https://facutvivas.com/lmc_raid_log/index.php/welcome/attendance_calendar", color=0x109319)
@@ -191,7 +191,9 @@ $absent clear character
                     WHERE 
                     m.del = 0
                     AND m.name LIKE :dn""")
-        result = connection.execute(sql, {'dn' : character})
+        
+        with engine.connect() as conn:
+            result = conn.execute(sql, {'dn' : character})
         
         try:
             charrow = result.one()
@@ -236,8 +238,9 @@ $absent clear character
                 'desc' : reason,
             }
             
-            id = connection.execute(sql, sql_params)
-            connection.commit()
+            with engine.connect() as conn:
+                id = conn.execute(sql, sql_params)
+                conn.commit()
             
             print("Attendance Added  = ",id.rowcount, character, sql_params)
             
@@ -259,8 +262,9 @@ $absent clear character
                 'mid' : member_id,
             }
             
-            id = connection.execute(sql, sql_params)
-            connection.commit()
+            with engine.connect() as conn:
+                id = conn.execute(sql, sql_params)
+                conn.commit()
             
             print("Attendance cleared for", character, sql_params)
         
